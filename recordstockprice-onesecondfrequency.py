@@ -10,53 +10,45 @@ Created on Sat Jan 20 19:44:22 2018
 # import modules for use here in this script
 import json
 import requests
-import schedule
 import time
+import numpy as np
+import pandas as pd
+# new code
+import matplotlib.pyplot as plt
 
 # initiate empty lists to populate into
-k = []
-Yr =[]
-Mth = []
-Dy = []
-Hr = []
-Mn = []
-Sec = []
+k1, time_lapsed = [], []
 
-TickerSymbol="CGG"
+# records the time the code initiates
+start_time = time.time()
 
-rsp = requests.get('https://finance.google.com/finance?output=json&q='+TickerSymbol)    
-
-
-# define function job to reload request from googlefinance in json.
-def job():   
-    rsp = requests.get('https://finance.google.com/finance?output=json&q='+TickerSymbol)   
-if rsp.status_code in (200,):
-    totdata = json.loads(rsp.content[6:-2].decode('unicode_escape'))
+def clock():
+    current_time = time.time()
+    Lapsed = current_time - start_time
+    time_lapsed.append(Lapsed)
+    return Lapsed
     
-def app():
-
-# capture Current Price from "totaldata"
-    kadd=totdata['op']
-# uses time module to produce the current date and time
-    Year=time.strftime("%Y")
-    Month=time.strftime("%m")
-    Day=time.strftime("%d")
-    Hour=time.strftime("%H")
-    Minute=time.strftime("%M")
-    Second=time.strftime("%S")
-# appends returns to current list and populates it
-    Yr.append(Year)
-    Mth.append(Month)
-    Dy.append(Day)
-    Hr.append(Hour)
-    Mn.append(Minute)
-    Sec.append(Second)
-    k.append(kadd)
-
-# schedules for "job" to be done every 2 seconds    
-schedule.every(1).seconds.do(job)
-schedule.every(1).seconds.do(app)
-
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+TickerSymbol1="CVX"
+rsp = requests.get('https://finance.google.com/finance?output=json&q='+TickerSymbol1)    
+# define function job to reload request from googlefinance in json.
+def job1():   
+    rsp = requests.get('https://finance.google.com/finance?output=json&q='+TickerSymbol1)    
+    if rsp.status_code in (200,):
+        totdata = json.loads(rsp.content[6:-2].decode('unicode_escape'))
+    kadd1=totdata['l']
+    k1.append(float(kadd1))
+    print(TickerSymbol1,"=",(time.time() - start_time),kadd1)
+    
+try:
+    while True:
+        data = clock() # get data from the function
+        job1()
+        plt.draw()
+        time.sleep(2)
+        if (time.time() - start_time) >= float(20):
+            alldata = pd.DataFrame({'Timelapsed': time_lapsed, 'Chevron': k1})
+            #to sort: alldata = alldata[['Day','Month', 'Year','Hour','Minute','Second','Chevron','ExxonMobil', 'ConocoPhilips']]
+            alldata.to_csv('{}.csv'.format(start_time))
+            break
+except KeyboardInterrupt:
+    print("Keyboard Interrupted after the script has lasped for",time.time() - start_time,"seconds")    
